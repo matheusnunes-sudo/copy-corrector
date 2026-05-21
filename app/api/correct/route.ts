@@ -22,24 +22,24 @@ Se não houver erros, retorne a lista "erros" vazia.
 Mantenha o tom, estilo e intenção do copy original. Corrija apenas erros claros de gramática e ortografia.`;
 
 export async function POST(req: Request) {
-  const { texto } = await req.json();
-
-  if (!texto || texto.trim().length === 0) {
-    return Response.json({ error: "Texto vazio." }, { status: 400 });
-  }
-
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    generationConfig: { responseMimeType: "application/json" },
-  });
-
-  const result = await model.generateContent(`${PROMPT}\n\nCorrija este copy:\n\n${texto}`);
-  const text = result.response.text();
-
   try {
+    const { texto } = await req.json();
+
+    if (!texto || texto.trim().length === 0) {
+      return Response.json({ error: "Texto vazio." }, { status: 400 });
+    }
+
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+      generationConfig: { responseMimeType: "application/json" },
+    });
+
+    const result = await model.generateContent(`${PROMPT}\n\nCorrija este copy:\n\n${texto}`);
+    const text = result.response.text();
     const parsed = JSON.parse(text);
     return Response.json(parsed);
-  } catch {
-    return Response.json({ error: "Erro ao processar resposta da IA." }, { status: 500 });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Erro inesperado.";
+    return Response.json({ error: message }, { status: 500 });
   }
 }
