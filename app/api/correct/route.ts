@@ -2,24 +2,50 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-const PROMPT = `Você é um especialista em revisão de textos de marketing em português brasileiro.
-Sua tarefa é corrigir erros de gramática e ortografia em copies publicitários (anúncios, carrosséis, landing pages, etc.).
+const PROMPT = `Você é um revisor de português brasileiro extremamente preciso e conservador, especializado em copies de marketing (anúncios, carrosséis, landing pages).
 
-Responda SEMPRE em JSON válido com o seguinte formato:
+REGRAS FUNDAMENTAIS — leia com atenção:
+
+1. **SEJA CONSERVADOR.** Só aponte um erro se tiver CERTEZA ABSOLUTA. Na dúvida, NÃO corrija. É muito pior corrigir algo certo do que deixar passar um erro.
+
+2. **NÃO altere estilo, tom, formato, emojis ou pontuação criativa.** Copies de marketing usam linguagem informal de propósito.
+
+3. **NÃO "corrija" o que não é erro.** Exemplos do que NÃO é erro:
+   - Frases curtas/sem verbo (comum em copy)
+   - Uso de emojis e símbolos
+   - Reticências, exclamações múltiplas
+   - Palavras em inglês (copy, landing page, etc.)
+   - Quebras de linha e formatação visual
+   - Números escritos com R$ ou formato de preço
+
+4. **Acordo Ortográfico de 1990 — regras do prefixo SEMI-:**
+   - COM hífen apenas se a palavra seguinte começar com "i" ou "h": semi-interno, semi-hospedagem
+   - SEM hífen nos demais casos: semiextensivo, semifinal, semianalfabeto, semicírculo
+   - Antes de R ou S, dobra-se a consoante: semirreta, semissólido
+
+5. **Foque APENAS em:**
+   - Erros ortográficos claros (palavras com letra errada)
+   - Acentuação obrigatória ausente ou errada
+   - Concordância verbal/nominal claramente errada
+   - Crase claramente errada
+   - Pontuação que muda o sentido
+
+6. **Antes de apontar um erro, se pergunte:** "Essa regra realmente existe? Tenho 100% de certeza?" Se não tiver, NÃO corrija.
+
+Responda SEMPRE em JSON válido neste formato exato:
 {
-  "corrigido": "texto completo corrigido",
+  "corrigido": "texto completo corrigido (ou idêntico ao original se não houver erros)",
   "erros": [
     {
-      "original": "trecho com erro",
+      "original": "trecho exato com erro",
       "corrigido": "trecho corrigido",
-      "explicacao": "explicação breve do erro"
+      "explicacao": "explicação curta e precisa da regra"
     }
   ],
-  "resumo": "resumo em uma frase do que foi corrigido (ou 'Nenhum erro encontrado.' se o texto estiver correto)"
+  "resumo": "uma frase resumindo (ou 'Nenhum erro encontrado.' se não houver erros)"
 }
 
-Se não houver erros, retorne a lista "erros" vazia.
-Mantenha o tom, estilo e intenção do copy original. Corrija apenas erros claros de gramática e ortografia.`;
+Se não houver erros, retorne "erros" como lista vazia e mantenha "corrigido" idêntico ao texto original.`;
 
 export async function POST(req: Request) {
   try {
@@ -30,8 +56,11 @@ export async function POST(req: Request) {
     }
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-      generationConfig: { responseMimeType: "application/json" },
+      model: "gemini-2.5-pro",
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.1,
+      },
     });
 
     const result = await model.generateContent(`${PROMPT}\n\nCorrija este copy:\n\n${texto}`);
