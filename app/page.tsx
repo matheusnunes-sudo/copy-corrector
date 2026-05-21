@@ -113,12 +113,12 @@ export default function Home() {
             </div>
 
             {/* Lado corrigido */}
-            <div className="p-5">
+            <div className={`p-5 ${semErros ? "bg-green-50/50" : ""}`}>
               <div className="flex items-center justify-between mb-3">
                 <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  Texto corrigido
+                  {semErros ? "Texto já está correto" : "Texto corrigido"}
                 </label>
-                {resultado && (
+                {resultado && !semErros && (
                   <button
                     onClick={() => copiarTexto(resultado.corrigido)}
                     className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
@@ -131,7 +131,31 @@ export default function Home() {
                 {carregando ? (
                   <span className="text-gray-400 italic">Corrigindo...</span>
                 ) : resultado ? (
-                  <span className="text-gray-800">{resultado.corrigido}</span>
+                  semErros ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center py-8 gap-3">
+                      <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M20 6 9 17l-5-5" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-green-700">Tudo certo!</p>
+                        <p className="text-xs text-gray-500 mt-1">Nenhum erro de português encontrado.</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="text-gray-800">{resultado.corrigido}</span>
+                  )
                 ) : (
                   <span className="text-gray-300">A versão corrigida aparecerá aqui...</span>
                 )}
@@ -161,55 +185,33 @@ export default function Home() {
           </div>
         )}
 
-        {resultado && (
-          <div className="space-y-4">
-            <div
-              className={`rounded-xl border shadow-sm p-5 ${
-                semErros
-                  ? "bg-green-50 border-green-200"
-                  : "bg-white border-gray-200"
-              }`}
-            >
-              <span
-                className={`inline-flex items-center gap-1.5 text-sm font-medium ${
-                  semErros ? "text-green-700" : "text-orange-600"
-                }`}
-              >
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    semErros ? "bg-green-500" : "bg-orange-400"
-                  }`}
-                />
-                {semErros
-                  ? "Nenhum erro encontrado"
-                  : `${resultado.erros.length} ${resultado.erros.length === 1 ? "correção realizada" : "correções realizadas"}`}
-              </span>
+        {resultado && resultado.erros.length > 0 && (
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="w-2 h-2 rounded-full bg-orange-400" />
+              <h2 className="text-sm font-semibold text-gray-700">
+                {resultado.erros.length} {resultado.erros.length === 1 ? "apontamento" : "apontamentos"}
+              </h2>
             </div>
-
-            {resultado.erros.length > 0 && (
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                <h2 className="text-sm font-semibold text-gray-700 mb-4">Apontamentos</h2>
-                <div className="space-y-3">
-                  {resultado.erros.map((e, i) => (
-                    <div key={i} className="flex gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100 text-sm">
-                      <span className="text-gray-400 font-medium min-w-[20px]">{i + 1}.</span>
-                      <div className="space-y-1.5 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="line-through text-red-500 bg-red-50 px-2 py-0.5 rounded">
-                            {e.original}
-                          </span>
-                          <span className="text-gray-400">→</span>
-                          <span className="text-green-700 bg-green-50 px-2 py-0.5 rounded font-medium">
-                            {e.corrigido}
-                          </span>
-                        </div>
-                        <p className="text-gray-600 text-xs leading-relaxed">{e.explicacao}</p>
-                      </div>
+            <div className="space-y-3">
+              {resultado.erros.map((e, i) => (
+                <div key={i} className="flex gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100 text-sm">
+                  <span className="text-gray-400 font-medium min-w-[20px]">{i + 1}.</span>
+                  <div className="space-y-1.5 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="line-through text-red-500 bg-red-50 px-2 py-0.5 rounded">
+                        {e.original}
+                      </span>
+                      <span className="text-gray-400">→</span>
+                      <span className="text-green-700 bg-green-50 px-2 py-0.5 rounded font-medium">
+                        {e.corrigido}
+                      </span>
                     </div>
-                  ))}
+                    <p className="text-gray-600 text-xs leading-relaxed">{e.explicacao}</p>
+                  </div>
                 </div>
-              </div>
-            )}
+              ))}
+            </div>
           </div>
         )}
       </div>
