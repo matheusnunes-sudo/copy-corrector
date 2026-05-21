@@ -1,8 +1,8 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-const SYSTEM_PROMPT = `Você é um especialista em revisão de textos de marketing em português brasileiro.
+const PROMPT = `Você é um especialista em revisão de textos de marketing em português brasileiro.
 Sua tarefa é corrigir erros de gramática e ortografia em copies publicitários (anúncios, carrosséis, landing pages, etc.).
 
 Responda SEMPRE em JSON válido com o seguinte formato:
@@ -28,20 +28,16 @@ export async function POST(req: Request) {
     return Response.json({ error: "Texto vazio." }, { status: 400 });
   }
 
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 2048,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: `Corrija este copy:\n\n${texto}` }],
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    generationConfig: { responseMimeType: "application/json" },
   });
 
-  const content = response.content[0];
-  if (content.type !== "text") {
-    return Response.json({ error: "Resposta inesperada da IA." }, { status: 500 });
-  }
+  const result = await model.generateContent(`${PROMPT}\n\nCorrija este copy:\n\n${texto}`);
+  const text = result.response.text();
 
   try {
-    const parsed = JSON.parse(content.text);
+    const parsed = JSON.parse(text);
     return Response.json(parsed);
   } catch {
     return Response.json({ error: "Erro ao processar resposta da IA." }, { status: 500 });
